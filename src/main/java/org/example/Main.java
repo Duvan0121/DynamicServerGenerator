@@ -52,10 +52,6 @@ public class Main {
         Map<String, Object> components = (Map<String, Object>) swaggerDoc.getOrDefault("components", new HashMap<>());
         Map<String, Object> schemas = (Map<String, Object>) components.getOrDefault("schemas", new HashMap<>());
         List<Map<String, String>> servers = (List<Map<String, String>>) swaggerDoc.getOrDefault("servers", new ArrayList<>());
-        Map<String, Object> info = (Map<String, Object>) swaggerDoc.get("info");
-
-
-
         String url = servers.size() > 0 ? servers.get(0).get("url") : null;
         URI uri = new URI(url);
         int port = uri.getPort();
@@ -66,53 +62,47 @@ public class Main {
 
         // Mensaje inicial que se muestra solo una vez
         StringBuilder initialMessage = new StringBuilder();
-        initialMessage.append("//----INFORMACION GENERAL DE LA API----\n\n"+
-                "//Info_Title: "+(String) info.get("title") +"\n"+
-                "//Info_Description:"+ (String) info.get("description") +"\n"+
-                "//Info_Version: "+ (String) info.get("version")+"\n"+
-                "//Info_TermsOfService: "+(String) info.get("termsOfService")+"\n\n"
-                );
+        initialMessage.append("console.log('Servidor iniciado correctamente. Bienvenido a la API dinámica.');\n\n");
 
         for (Map.Entry<String, Object> entry : schemas.entrySet()) {
             String schemaName = entry.getKey();
             Map<String, Object> schema = (Map<String, Object>) entry.getValue();
 
-            // Inicializar variables para el esquema actual
-            StringBuilder schemaAttributes = new StringBuilder();
-            List<String> dataTypesArray = new ArrayList<>();
-            StringBuilder requiredAttributes = new StringBuilder();
-
             Map<String, Object> properties = (Map<String, Object>) schema.get("properties");
-            for (String property : properties.keySet()) {
-                schemaAttributes.append(property).append(", ");
-            }
 
-            List<String> requiredList = (List<String>) schema.getOrDefault("required", new ArrayList<>());
-            for (String attr : requiredList) {
-                requiredAttributes.append("'").append(attr).append("', ");
-            }
+            // Crear una variable que guarde múltiples objetos con datos aleatorios
+            schemasInfo.append(String.format(
+                    "const %1$sList = [\n", schemaName.toLowerCase()
+            ));
 
-            for (Map.Entry<String, Object> propEntry : properties.entrySet()) {
-                Map<String, Object> propertyDetails = (Map<String, Object>) propEntry.getValue();
-                if (propertyDetails.containsKey("type")) {
-                    dataTypesArray.add((String) propertyDetails.get("type"));
+            // Generar tres instancias con datos aleatorios
+            for (int i = 1; i <= 3; i++) {
+                schemasInfo.append("    {\n");
+
+                // Asignar id manualmente y evitar duplicar
+                schemasInfo.append(String.format("        id: %d,\n", i));
+
+                for (Map.Entry<String, Object> propEntry : properties.entrySet()) {
+                    String propName = propEntry.getKey();
+
+                    // Evitar agregar "id" si ya se ha añadido manualmente
+                    if (!propName.equalsIgnoreCase("id")) {
+                        Map<String, Object> propertyDetails = (Map<String, Object>) propEntry.getValue();
+                        String type = (String) propertyDetails.get("type");
+                        String randomValue = generateRandomValue(type);
+
+                        schemasInfo.append(String.format("        %s: %s,\n", propName, randomValue));
+                    }
                 }
+
+                schemasInfo.append("    },\n");
             }
 
-            // Crear una variable que guarde las propiedades y tipos de datos
-            schemasInfo.append(String.format("const %1$sSchema = {\nproperties: {\n", schemaName.toLowerCase()));
-
-            for (Map.Entry<String, Object> propEntry : properties.entrySet()) {
-                Map<String, Object> propertyDetails = (Map<String, Object>) propEntry.getValue();
-                String type = (String) propertyDetails.get("type");
-                schemasInfo.append(String.format("        %1$s: '%2$s',\n", propEntry.getKey(), type));
-            }
-
-            schemasInfo.append("    }\n};\n\n");
+            schemasInfo.append("];\n\n");
 
             // Crear o actualizar handlers
             handlers.append(String.format(
-                    "//-------------ENDPOINS DEL OBJETO %1$s-------------\n\n" +
+                    "//----INFORMACION GENERAL DE LA API----\n" +
                             "//Se hace un GET general sobre '/%1$ss'\n" +
                             "app.get('/%1$ss', (req, res) => {\n" +
                             "    res.status(200).json(%1$sList);\n" +
@@ -154,25 +144,41 @@ public class Main {
                             "        res.status(404).json({ message: '%1$s no encontrado' });\n" +
                             "    }\n" +
                             "});\n\n",
-                    schemaName.toLowerCase(), dataTypesArray.size()
+                    schemaName.toLowerCase(), properties.size()
             ));
         }
 
         // Verificar si es local o remoto
         if (isLocal) {
-            // Incluir configuración de Node.js y Express si es local
-            return initialMessage.toString() +  // Mensaje inicial que se muestra solo una vez
+            return initialMessage.toString() +
                     "//----INFORMACION SERVIDOR LOCAL CON NODE Y EXPRESS----\n" +
                     "const express = require('express');\n" +
                     "const app = express();\n" +
                     "app.use(express.json());\n\n" +
-                    schemasInfo.toString() +  // Agregar la información de esquemas antes de los endpoints
+                    schemasInfo.toString() +
                     handlers.toString() +
                     "\napp.listen(" + port + ", () => console.log('Servidor corriendo en " + url + "'));\n";
         } else {
-            // Solo crear los endpoints si es remoto
             return initialMessage.toString() + schemasInfo.toString() + handlers.toString();
         }
     }
+
+    // Método para generar un valor aleatorio según el tipo de dato
+    public static String generateRandomValue(String type) {
+        Random random = new Random();
+        switch (type) {
+            case "string":
+                return "\"" + UUID.randomUUID().toString().substring(0, 8) + "\"";
+            case "integer":
+                return String.valueOf(random.nextInt(100));
+            case "boolean":
+                return String.valueOf(random.nextBoolean());
+            case "number":
+                return String.valueOf(random.nextDouble() * 100);
+            default:
+                return "\"unknown\"";
+        }
+    }
+
 
 }

@@ -106,7 +106,7 @@ components:
     Carro:
       type: object
       properties:
-        idcar:
+        id:
           type: integer
         nombrecar:
           type: string

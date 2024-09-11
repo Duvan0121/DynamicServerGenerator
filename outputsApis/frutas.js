@@ -1,35 +1,53 @@
-//----INFORMACION GENERAL DE LA API----
-
-//Info_Title: API de Frutas
-//Info_Description:Esta API permite gestionar información sobre frutas.
-//Info_Version: 1.0.0
-//Info_TermsOfService: null
+console.log('Servidor iniciado correctamente. Bienvenido a la API dinámica.');
 
 //----INFORMACION SERVIDOR LOCAL CON NODE Y EXPRESS----
 const express = require('express');
 const app = express();
 app.use(express.json());
 
-const frutaSchema = {
-properties: {
-        id: 'integer',
-        nombre: 'string',
-        color: 'string',
-        precio: 'number',
-    }
-};
+const frutaList = [
+    {
+        id: 1,
+        nombre: "fb02f6e0",
+        color: "fc3b6bc6",
+        precio: 0.6481178119995268,
+    },
+    {
+        id: 2,
+        nombre: "b2757bae",
+        color: "8a3e4840",
+        precio: 27.827912399332966,
+    },
+    {
+        id: 3,
+        nombre: "19b11d8e",
+        color: "78147e83",
+        precio: 73.39245221727762,
+    },
+];
 
-const carroSchema = {
-properties: {
-        idcar: 'integer',
-        nombrecar: 'string',
-        colorcar: 'string',
-        preciocar: 'number',
-    }
-};
+const carroList = [
+    {
+        id: 1,
+        nombrecar: "424b1418",
+        colorcar: "b8221980",
+        preciocar: 90.8778331775232,
+    },
+    {
+        id: 2,
+        nombrecar: "b7507aec",
+        colorcar: "26bd9e9e",
+        preciocar: 66.39453670340023,
+    },
+    {
+        id: 3,
+        nombrecar: "a65f6fc8",
+        colorcar: "f028be9e",
+        preciocar: 85.08058850022628,
+    },
+];
 
-//-------------ENDPOINS DEL OBJETO fruta-------------
-
+//----INFORMACION GENERAL DE LA API----
 //Se hace un GET general sobre '/frutas'
 app.get('/frutas', (req, res) => {
     res.status(200).json(frutaList);
@@ -76,8 +94,7 @@ app.delete('/fruta/:id', (req, res) => {
     }
 });
 
-//-------------ENDPOINS DEL OBJETO carro-------------
-
+//----INFORMACION GENERAL DE LA API----
 //Se hace un GET general sobre '/carros'
 app.get('/carros', (req, res) => {
     res.status(200).json(carroList);
