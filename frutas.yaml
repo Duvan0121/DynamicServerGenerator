@@ -1,0 +1,116 @@
+openapi: 3.0.0
+info:
+  title: API de Frutas
+  description: Esta API permite gestionar información sobre frutas.
+  version: 1.0.0
+servers:
+  - url: http://localhost:8080/
+paths:
+  /frutas:
+    get:
+      summary: Obtener todas las frutas
+      responses:
+        '200':
+          description: Lista de frutas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fruta'
+    post:
+      summary: Crear una nueva fruta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Fruta'
+      responses:
+        '201':
+          description: Fruta creada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fruta'
+  /frutas/{id}:
+    get:
+      summary: Obtener una fruta por ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID de la fruta
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Fruta encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fruta'
+        '404':
+          description: Fruta no encontrada
+    put:
+      summary: Actualizar una fruta
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID de la fruta
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Fruta'
+      responses:
+        '200':
+          description: Fruta actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fruta'
+        '404':
+          description: Fruta no encontrada
+    delete:
+      summary: Eliminar una fruta
+      parameters:
+        - in: path
+          name: id
+          required: true
+          description: ID de la fruta
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Fruta eliminada exitosamente
+        '404':
+          description: Fruta no encontrada
+components:
+  schemas:
+    Fruta:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        color:
+          type: string
+        precio:
+          type: number
+    Carro:
+      type: object
+      properties:
+        idcar:
+          type: integer
+        nombrecar:
+          type: string
+        colorcar:
+          type: string
+        preciocar:
+          type: number
