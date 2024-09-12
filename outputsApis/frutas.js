@@ -1,53 +1,18 @@
-console.log('Servidor iniciado correctamente. Bienvenido a la API dinámica.');
-
-//----INFORMACION SERVIDOR LOCAL CON NODE Y EXPRESS----
-const express = require('express');
-const app = express();
-app.use(express.json());
-
-const frutaList = [
-    {
-        id: 1,
-        nombre: "fb02f6e0",
-        color: "fc3b6bc6",
-        precio: 0.6481178119995268,
-    },
-    {
-        id: 2,
-        nombre: "b2757bae",
-        color: "8a3e4840",
-        precio: 27.827912399332966,
-    },
-    {
-        id: 3,
-        nombre: "19b11d8e",
-        color: "78147e83",
-        precio: 73.39245221727762,
-    },
-];
-
-const carroList = [
-    {
-        id: 1,
-        nombrecar: "424b1418",
-        colorcar: "b8221980",
-        preciocar: 90.8778331775232,
-    },
-    {
-        id: 2,
-        nombrecar: "b7507aec",
-        colorcar: "26bd9e9e",
-        preciocar: 66.39453670340023,
-    },
-    {
-        id: 3,
-        nombrecar: "a65f6fc8",
-        colorcar: "f028be9e",
-        preciocar: 85.08058850022628,
-    },
-];
+console.log('Bienvenido a la API');
 
 //----INFORMACION GENERAL DE LA API----
+//Title: API de Frutas
+//Description: Esta API permite gestionar información sobre frutas.
+//Version: 1.0.0
+
+//----DATA PARA EL OBJETO fruta----
+const frutaList = [{id: 1,nombre: "99ea720d", color: "3c9ff0d5", precio: 41.04021067405878},{id: 2,nombre: "c268c9a0", color: "9a90fe88", precio: 23.83011009039725},{id: 3,nombre: "4dc52fd9", color: "8ac88712", precio: 8.405632736231505},{id: 4,nombre: "c3af6911", color: "0b3d104e", precio: 90.82906018096917},{id: 5,nombre: "a14e78c7", color: "0e13c946", precio: 83.3518832961444}];
+
+//----DATA PARA EL OBJETO carro----
+const carroList = [{id: 1,nombrecar: "538d35f0", colorcar: "6e3d9ec4", preciocar: 67.65610710066991},{id: 2,nombrecar: "1669a69b", colorcar: "c54d9862", preciocar: 33.122863627771615},{id: 3,nombrecar: "e88e3de9", colorcar: "0809b83d", preciocar: 3.670705734138935},{id: 4,nombrecar: "e8c34dcf", colorcar: "69678077", preciocar: 62.056767051960605},{id: 5,nombrecar: "7471a3f7", colorcar: "a60e5466", preciocar: 65.72910720486162}];
+
+
+//----ENDPOINTS DEL OBJETO /fruta----
 //Se hace un GET general sobre '/frutas'
 app.get('/frutas', (req, res) => {
     res.status(200).json(frutaList);
@@ -94,7 +59,8 @@ app.delete('/fruta/:id', (req, res) => {
     }
 });
 
-//----INFORMACION GENERAL DE LA API----
+
+//----ENDPOINTS DEL OBJETO /carro----
 //Se hace un GET general sobre '/carros'
 app.get('/carros', (req, res) => {
     res.status(200).json(carroList);
@@ -141,5 +107,3 @@ app.delete('/carro/:id', (req, res) => {
     }
 });
 
-
-app.listen(8080, () => console.log('Servidor corriendo en http://localhost:8080/'));

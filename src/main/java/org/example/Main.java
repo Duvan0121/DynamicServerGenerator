@@ -27,7 +27,7 @@ public class Main {
         }
 
         // Definir si es local o remoto
-        boolean isLocal = true; // Cambiar a false si es remoto
+        boolean isLocal = false; // Cambiar a false si es remoto
 
         // Generar el código del servidor o los endpoints
         String serverCode = generateServerCode(swaggerDocument, isLocal);
@@ -52,6 +52,7 @@ public class Main {
         Map<String, Object> components = (Map<String, Object>) swaggerDoc.getOrDefault("components", new HashMap<>());
         Map<String, Object> schemas = (Map<String, Object>) components.getOrDefault("schemas", new HashMap<>());
         List<Map<String, String>> servers = (List<Map<String, String>>) swaggerDoc.getOrDefault("servers", new ArrayList<>());
+        Map<String, Object> info = (Map<String, Object>) swaggerDoc.get("info");
         String url = servers.size() > 0 ? servers.get(0).get("url") : null;
         URI uri = new URI(url);
         int port = uri.getPort();
@@ -62,25 +63,31 @@ public class Main {
 
         // Mensaje inicial que se muestra solo una vez
         StringBuilder initialMessage = new StringBuilder();
-        initialMessage.append("console.log('Servidor iniciado correctamente. Bienvenido a la API dinámica.');\n\n");
+        initialMessage.append("console.log('Bienvenido a la API');\n\n"+
+                "//----INFORMACION GENERAL DE LA API----\n"+
+                "//Title: "+info.get("title")+"\n" +
+                "//Description: "+info.get("description")+"\n" +
+                "//Version: "+info.get("version")+"\n\n"
+        );
+
 
         for (Map.Entry<String, Object> entry : schemas.entrySet()) {
             String schemaName = entry.getKey();
             Map<String, Object> schema = (Map<String, Object>) entry.getValue();
-
             Map<String, Object> properties = (Map<String, Object>) schema.get("properties");
 
             // Crear una variable que guarde múltiples objetos con datos aleatorios
-            schemasInfo.append(String.format(
-                    "const %1$sList = [\n", schemaName.toLowerCase()
+            schemasInfo.append(String.format("//----DATA PARA EL OBJETO %1$s----\n"+
+                    "const %1$sList = [", schemaName.toLowerCase()
             ));
 
             // Generar tres instancias con datos aleatorios
-            for (int i = 1; i <= 3; i++) {
-                schemasInfo.append("    {\n");
+            for (int i = 1; i <= 5; i++) {
+                schemasInfo.append("{");
 
                 // Asignar id manualmente y evitar duplicar
-                schemasInfo.append(String.format("        id: %d,\n", i));
+                schemasInfo.append(String.format("id: %d,", i));
+                int size = properties.size();
 
                 for (Map.Entry<String, Object> propEntry : properties.entrySet()) {
                     String propName = propEntry.getKey();
@@ -91,18 +98,25 @@ public class Main {
                         String type = (String) propertyDetails.get("type");
                         String randomValue = generateRandomValue(type);
 
-                        schemasInfo.append(String.format("        %s: %s,\n", propName, randomValue));
+                        schemasInfo.append(String.format("%s: %s, ", propName, randomValue));
+
                     }
                 }
-
-                schemasInfo.append("    },\n");
+                if (schemasInfo.length() > 2) {
+                    schemasInfo.setLength(schemasInfo.length() - 2);  // Elimina solo la última coma y espacio
+                }
+                schemasInfo.append("},");
+            }
+            // Eliminar la última coma después del último objeto
+            if (schemasInfo.charAt(schemasInfo.length() - 1) == ',') {
+                schemasInfo.setLength(schemasInfo.length() - 1);  // Elimina la última coma
             }
 
             schemasInfo.append("];\n\n");
 
             // Crear o actualizar handlers
             handlers.append(String.format(
-                    "//----INFORMACION GENERAL DE LA API----\n" +
+                    "\n//----ENDPOINTS DEL OBJETO /%1$s----\n" +
                             "//Se hace un GET general sobre '/%1$ss'\n" +
                             "app.get('/%1$ss', (req, res) => {\n" +
                             "    res.status(200).json(%1$sList);\n" +
