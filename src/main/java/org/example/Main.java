@@ -12,13 +12,17 @@ import java.util.*;
 public class Main {
 
     public static void main(String[] args) throws URISyntaxException {
+        // Nombre del archivo YAML de OpenAPI que se cargará.
         String nameFile = "frutas.yaml";
+        // Obtener la ruta completa del archivo YAML.
         String filePath = System.getProperty("user.dir") + File.separator + nameFile;
 
-        // Cargar el archivo YAML de OpenAPI
+        // Crear una instancia de Yaml para cargar el archivo YAML.
         Yaml yaml = new Yaml();
+        // Mapa para almacenar el documento Swagger cargado.
         Map<String, Object> swaggerDocument = null;
 
+        // Cargar el archivo YAML utilizando FileInputStream.
         try (FileInputStream fis = new FileInputStream(new File(filePath))) {
             swaggerDocument = yaml.load(fis);
         } catch (IOException e) {
@@ -26,42 +30,53 @@ public class Main {
             return;
         }
 
-        // Definir si es local o remoto
-        boolean isLocal = false; // Cambiar a false si es remoto
+        // Variable para definir si el servidor será local o remoto.
+        boolean isLocal = true; // Cambiar a false si es remoto.
 
-        // Generar el código del servidor o los endpoints
+        // Generar el código del servidor o endpoints a partir del documento Swagger.
         String serverCode = generateServerCode(swaggerDocument, isLocal);
 
-        // Asegurarse de que el directorio 'outputsApis' exista
+        // Crear el directorio 'outputsApis' si no existe.
         File routesDir = new File(System.getProperty("user.dir") + File.separator + "outputsApis");
         if (!routesDir.exists()) {
             routesDir.mkdir();
         }
 
-        // Escribir el archivo del servidor como JavaScript
+        // Crear y escribir el archivo JavaScript que contendrá el servidor.
         File serverFile = new File(routesDir, nameFile.replace(".yaml", ".js"));
         try (FileWriter fileWriter = new FileWriter(serverFile)) {
-                fileWriter.write(serverCode);
+            fileWriter.write(serverCode);
             System.out.println("Archivo de servidor dinámico generado con éxito: " + serverFile.getAbsolutePath());
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    /**
+     * Genera el código del servidor en JavaScript basado en el documento Swagger y si es local o remoto.
+     *
+     * @param swaggerDoc Mapa del documento Swagger cargado desde el archivo YAML.
+     * @param isLocal Indica si el servidor será ejecutado localmente o no.
+     * @return String con el código del servidor en JavaScript.
+     * @throws URISyntaxException Excepción si la URI no es válida.
+     */
     public static String generateServerCode(Map<String, Object> swaggerDoc, boolean isLocal) throws URISyntaxException {
+        // Extraer las secciones 'components', 'schemas' y 'servers' del documento Swagger.
         Map<String, Object> components = (Map<String, Object>) swaggerDoc.getOrDefault("components", new HashMap<>());
         Map<String, Object> schemas = (Map<String, Object>) components.getOrDefault("schemas", new HashMap<>());
         List<Map<String, String>> servers = (List<Map<String, String>>) swaggerDoc.getOrDefault("servers", new ArrayList<>());
         Map<String, Object> info = (Map<String, Object>) swaggerDoc.get("info");
+
+        // Obtener la URL del servidor y extraer el puerto de la misma.
         String url = servers.size() > 0 ? servers.get(0).get("url") : null;
         URI uri = new URI(url);
         int port = uri.getPort();
 
-        // Crear la representación en memoria para los esquemas y las propiedades
+        // StringBuilders para construir el código dinámico de los esquemas y handlers.
         StringBuilder handlers = new StringBuilder();
         StringBuilder schemasInfo = new StringBuilder();
 
-        // Mensaje inicial que se muestra solo una vez
+        // Mensaje inicial con la información general de la API.
         StringBuilder initialMessage = new StringBuilder();
         initialMessage.append("console.log('Bienvenido a la API');\n\n"+
                 "//----INFORMACION GENERAL DE LA API----\n"+
@@ -70,64 +85,65 @@ public class Main {
                 "//Version: "+info.get("version")+"\n\n"
         );
 
-
+        // Recorrer los esquemas definidos en el archivo YAML.
         for (Map.Entry<String, Object> entry : schemas.entrySet()) {
             String schemaName = entry.getKey();
             Map<String, Object> schema = (Map<String, Object>) entry.getValue();
             Map<String, Object> properties = (Map<String, Object>) schema.get("properties");
 
-            // Crear una variable que guarde múltiples objetos con datos aleatorios
+            // Crear un arreglo de objetos con datos simulados para el esquema actual.
             schemasInfo.append(String.format("//----DATA PARA EL OBJETO %1$s----\n"+
                     "const %1$sList = [", schemaName.toLowerCase()
             ));
 
-            // Generar tres instancias con datos aleatorios
+            // Generar cinco instancias con datos aleatorios para cada esquema.
             for (int i = 1; i <= 5; i++) {
                 schemasInfo.append("{");
 
-                // Asignar id manualmente y evitar duplicar
+                // Asignar un ID único manualmente para cada instancia.
                 schemasInfo.append(String.format("id: %d,", i));
                 int size = properties.size();
 
+                // Recorrer las propiedades del esquema para asignarles un valor aleatorio.
                 for (Map.Entry<String, Object> propEntry : properties.entrySet()) {
                     String propName = propEntry.getKey();
 
-                    // Evitar agregar "id" si ya se ha añadido manualmente
+                    // Evitar duplicar la propiedad 'id'.
                     if (!propName.equalsIgnoreCase("id")) {
                         Map<String, Object> propertyDetails = (Map<String, Object>) propEntry.getValue();
                         String type = (String) propertyDetails.get("type");
                         String randomValue = generateRandomValue(type);
 
                         schemasInfo.append(String.format("%s: %s, ", propName, randomValue));
-
                     }
                 }
+                // Eliminar la última coma y espacio sobrante.
                 if (schemasInfo.length() > 2) {
-                    schemasInfo.setLength(schemasInfo.length() - 2);  // Elimina solo la última coma y espacio
+                    schemasInfo.setLength(schemasInfo.length() - 2);
                 }
                 schemasInfo.append("},");
             }
-            // Eliminar la última coma después del último objeto
+            // Eliminar la coma final sobrante.
             if (schemasInfo.charAt(schemasInfo.length() - 1) == ',') {
-                schemasInfo.setLength(schemasInfo.length() - 1);  // Elimina la última coma
+                schemasInfo.setLength(schemasInfo.length() - 1);
             }
 
             schemasInfo.append("];\n\n");
 
-            // Crear o actualizar handlers
+            // Generar los handlers (endpoints) para cada esquema.
             handlers.append(String.format(
                     "\n//----ENDPOINTS DEL OBJETO /%1$s----\n" +
-                            "//Se hace un GET general sobre '/%1$ss'\n" +
+                            "// GET para obtener todos los objetos '%1$s'\n" +
                             "app.get('/%1$ss', (req, res) => {\n" +
                             "    res.status(200).json(%1$sList);\n" +
                             "});\n\n" +
-                            "//Se hace un GET individual sobre '/%1$s'\n" +
+                            "// GET para obtener un objeto '%1$s' por ID\n" +
                             "app.get('/%1$s/:id', (req, res) => {\n" +
                             "    const item = %1$sList.find(i => i.id === parseInt(req.params.id));\n" +
                             "    if (item) res.status(200).json(item);\n" +
                             "    else res.status(404).json({ message: '%1$s no encontrado' });\n" +
                             "});\n\n" +
-                            "//Se hace un POST sobre '/%1$s'\n" +
+                            "// POST para crear un nuevo '%1$s'\n" +
                             "app.post('/%1$s', (req, res) => {\n" +
                             "    delete req.body.id;\n" +
                             "    const newItem = { id: %1$sList.length + 1, ...req.body };\n" +
@@ -138,7 +154,7 @@ public class Main {
                             "        res.status(201).json(newItem);\n" +
                             "    }\n" +
                             "});\n\n" +
-                            "//Se hace un PUT individual sobre '/%1$s'\n" +
+                            "// PUT para actualizar un '%1$s' existente\n" +
                             "app.put('/%1$s/:id', (req, res) => {\n" +
                             "    const itemIndex = %1$sList.findIndex(i => i.id === parseInt(req.params.id));\n" +
                             "    if (itemIndex !== -1) {\n" +
@@ -148,7 +164,7 @@ public class Main {
                             "        res.status(404).json({ message: '%1$s no encontrado' });\n" +
                             "    }\n" +
                             "});\n\n" +
-                            "//Se hace un DELETE individual sobre '/%1$ss'\n" +
+                            "// DELETE para eliminar un '%1$s' por ID\n" +
                             "app.delete('/%1$s/:id', (req, res) => {\n" +
                             "    const itemIndex = %1$sList.findIndex(i => i.id === parseInt(req.params.id));\n" +
                             "    if (itemIndex !== -1) {\n" +
@@ -162,7 +178,7 @@ public class Main {
             ));
         }
 
-        // Verificar si es local o remoto
+        // Retornar el código del servidor en función de si es local o remoto.
         if (isLocal) {
             return initialMessage.toString() +
                     "//----INFORMACION SERVIDOR LOCAL CON NODE Y EXPRESS----\n" +
@@ -177,7 +193,12 @@ public class Main {
         }
     }
 
-    // Método para generar un valor aleatorio según el tipo de dato
+    /**
+     * Genera un valor aleatorio basado en el tipo de dato.
+     *
+     * @param type Tipo de dato (string, integer, boolean, etc.).
+     * @return String con un valor aleatorio adecuado para el tipo de dato.
+     */
     public static String generateRandomValue(String type) {
         Random random = new Random();
         switch (type) {
@@ -193,6 +214,4 @@ public class Main {
                 return "\"unknown\"";
         }
     }
-
-
 }
